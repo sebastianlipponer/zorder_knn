@@ -1,0 +1,41 @@
+name: Build and Test
+on: [push, pull_request]
+
+jobs:
+    build:
+        name: ${{ matrix.config.name }}
+        runs-on: ${{ matrix.config.os }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                config:
+                - {
+                    name: "Windows MSVC",
+                    os: windows-latest
+                  }
+                - {
+                    name: "Ubuntu GCC",
+                    os: ubuntu-latest
+                  }
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Build Extern
+              shell: bash
+              run: |
+                  if [ "$RUNNER_OS" == "Windows" ]; then
+                      cmd.exe /C build-extern.cmd
+                  elif [ "$RUNNER_OS" == "Linux" ]; then
+                      ./build-extern.sh
+                  fi
+
+            - name: Build
+              shell: bash
+              run: |
+                  mkdir build
+                  cd build
+                  cmake ..
+                  cmake --build .
+                  ctest

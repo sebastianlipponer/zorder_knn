@@ -1,4 +1,5 @@
 # zorder_knn
+[![Build badge](https://github.com/sebastianlipponer/zorder_knn/actions/workflows/build.yml/badge.svg)](https://github.com/sebastianlipponer/zorder_knn/actions?workflow=build)
 
 zorder_knn is a C++ header-only library that implements a floating point morton order comparison operator<sup>1</sup> for n-dimensional points.
 
