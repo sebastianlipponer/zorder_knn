@@ -5,7 +5,6 @@ project(zorder_knn
     VERSION 1.0
 )
 
-option(BUILD_TESTS "Build tests" ON)
 option(BUILD_EXAMPLE "Build example" ON)
 
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -26,7 +25,8 @@ set(LIBRARY_OUTPUT_PATH    "${PROJECT_BINARY_DIR}/bin")
 
 add_subdirectory(zorder_knn)
 
-if (BUILD_TESTS)
+include(CTest)
+if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 if (BUILD_EXAMPLE)
