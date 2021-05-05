@@ -64,20 +64,20 @@ std::array<Test, 18> tests{{
 
 }
 
-TEST(xor_msb, log_base2_uint32)
+TEST(FloatXorMsb, log_base2_uint32)
 {
     for (std::size_t j{0}; j < tests.size() - 2; ++j)
     {
         auto const& i = tests[j];
-        EXPECT_EQ(zorder_knn::detail::xor_msb(
+        EXPECT_EQ(zorder_knn::detail::FloatXorMsb(
             static_cast<float>(i.p), static_cast<float>(i.q)), i.xor_msb);
     }
  }
 
-TEST(xor_msb, log_base2_uint64)
+TEST(FloatXorMsb, log_base2_uint64)
 {
     for (auto const& i: tests)
     {
-        EXPECT_EQ(zorder_knn::detail::xor_msb(i.p, i.q), i.xor_msb);
+        EXPECT_EQ(zorder_knn::detail::FloatXorMsb(i.p, i.q), i.xor_msb);
     }
 }

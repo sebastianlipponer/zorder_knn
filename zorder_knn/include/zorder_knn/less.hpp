@@ -174,7 +174,7 @@ template <> struct significand<double> { static constexpr uint8_t nbits = 52; };
 
 template <typename Scalar>
 inline auto
-xor_msb(Scalar p, Scalar q) -> decltype(FloatExp(FloatToUInt(p)))
+FloatXorMsb(Scalar p, Scalar q) -> decltype(FloatExp(FloatToUInt(p)))
 {
     if (p == q || p == -q) { return std::numeric_limits<int>::min(); }
 
@@ -219,7 +219,7 @@ struct less
             if ((p[j] < zero) != (q[j] < zero))
                 return p[j] < q[j];
 
-            auto y = detail::xor_msb(p[j], q[j]);
+            auto y = detail::FloatXorMsb(p[j], q[j]);
 
             if (x < y)
             {
