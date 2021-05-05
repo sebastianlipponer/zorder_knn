@@ -168,8 +168,13 @@ UIntLogBase2(uint64_t x) -> decltype(log0_nan)
     return log_base2;
 }
 
-inline int
-xor_msb(float p, float q)
+template <typename T> struct significand;
+template <> struct significand<float>  { static constexpr uint8_t nbits = 23; };
+template <> struct significand<double> { static constexpr uint8_t nbits = 52; };
+
+template <typename Scalar>
+inline auto
+xor_msb(Scalar p, Scalar q) -> decltype(FloatExp(FloatToUInt(p)))
 {
     if (p == q || p == -q) { return std::numeric_limits<int>::min(); }
 
@@ -184,31 +189,7 @@ xor_msb(float p, float q)
         auto xor_psig_qsig = FloatSig(pui) ^ FloatSig(qui);
 
         if (xor_psig_qsig > 0)
-            return p_exp + UIntLogBase2(xor_psig_qsig) - 23;
-        else
-            return p_exp;
-    }
-
-    return std::max(p_exp, q_exp);
-}
-
-inline int
-xor_msb(double p, double q)
-{
-    if (p == q || p == -q) { return std::numeric_limits<int>::min(); }
-
-    auto pui = FloatToUInt(p);
-    auto qui = FloatToUInt(q);
-
-    auto p_exp = FloatExp(pui);
-    auto q_exp = FloatExp(qui);
-
-    if (p_exp == q_exp)
-    {
-        uint64_t xor_psig_qsig = FloatSig(pui) ^ FloatSig(qui);
-
-        if (xor_psig_qsig > 0)
-            return p_exp + UIntLogBase2(xor_psig_qsig) - 52;
+            return p_exp + UIntLogBase2(xor_psig_qsig) - significand<Scalar>::nbits;
         else
             return p_exp;
     }
