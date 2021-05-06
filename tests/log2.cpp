@@ -24,20 +24,17 @@
 
 #include <gtest/gtest.h>
 
-TEST(log2, log_base2_uint32)
-{
-    for (unsigned int i{0}; i < 32; ++i)
-    {
-        uint32_t x = 0x1u << i;
-        EXPECT_EQ(zorder_knn::detail::UIntLogBase2(x), i);
-        EXPECT_EQ(zorder_knn::detail::UIntLogBase2(2 * x - 1), i);
-    }
-}
-
-TEST(log2, log_base2_uint64)
+TEST(UIntLogBase2, PowerOfTwo)
 {
     for (unsigned int i{0}; i < 64; ++i)
     {
+        if (i < 32)
+        {
+            uint32_t x = 0x1u << i;
+            EXPECT_EQ(zorder_knn::detail::UIntLogBase2(x), i);
+            EXPECT_EQ(zorder_knn::detail::UIntLogBase2(2 * x - 1), i);
+        }
+
         uint64_t x = 0x1ll << i;
         EXPECT_EQ(zorder_knn::detail::UIntLogBase2(x), i);
         EXPECT_EQ(zorder_knn::detail::UIntLogBase2(2 * x - 1), i);
