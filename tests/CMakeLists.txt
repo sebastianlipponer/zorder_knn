@@ -6,9 +6,10 @@ set_target_properties(unit_tests PROPERTIES FOLDER "Tests")
 
 target_sources(unit_tests PRIVATE
     flt.cpp
+    less/grid.cpp
+    less/random.cpp
     log2.cpp
     xor_msb.cpp
-    less.cpp
 )
 
 target_link_libraries(unit_tests
