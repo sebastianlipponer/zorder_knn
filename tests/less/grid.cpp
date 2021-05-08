@@ -23,13 +23,47 @@
 #include <zorder_knn/less.hpp>
 
 #include <gtest/gtest.h>
+#include <vector>
 #include <array>
 
-template <typename T, std::size_t d> using Pt = std::array<T, d>;
-using Pt2 = Pt<double, 2>;
-using Pt3 = Pt<double, 3>;
+namespace
+{
 
-TEST(less, simple_2d)
+template <std::size_t d>
+std::vector<std::array<float, d>>
+CastDoubleToFloat(std::vector<std::array<double, d>> const& points_double)
+{
+    std::vector<std::array<float, d>> points_float(points_double.size());
+    for (std::size_t i{0}; i < points_double.size(); ++i)
+    {
+        for (std::size_t j{0}; j < points_double[i].size(); ++j)
+        {
+            points_float[i][j] = static_cast<float>(points_double[i][j]);
+        }
+    }
+
+    return points_float;
+}
+
+template <typename Point>
+void
+TestLessGrid(std::vector<Point> const& points)
+{
+    constexpr std::size_t d = std::tuple_size<Point>::value;
+    zorder_knn::Less<Point, d> less;
+
+    for (std::size_t i{0}; i < points.size(); ++i)
+    {
+        for (std::size_t j{0}; j < points.size(); ++j)
+        {
+            EXPECT_EQ(less(points[i], points[j]), i < j);
+        }
+    }
+}
+
+}
+
+TEST(Less, Grid2D_4x4)
 {
     //  _____________________________________________________
     // |                                                     |
@@ -56,7 +90,7 @@ TEST(less, simple_2d)
     // |_____________________________________________________| y:
     // x: -0.75      -0.25       0.0       0.25       0.75
 
-    std::array<Pt2, 16> pts{{
+    std::vector<std::array<double, 16>> points{{
         { -0.75, -0.75 },  // p0
         { -0.25, -0.75 },  // p1
         { -0.75, -0.25 },  // p2
@@ -77,24 +111,15 @@ TEST(less, simple_2d)
         {  0.25,  0.75 },  // p14
         {  0.75,  0.75 },  // p15
     }};
-    
-    zorder_knn::Less<Pt2, 2> less_2f;
-    zorder_knn::Less<Pt2, 2> less_2d;
 
-    for (std::size_t i{0}; i < pts.size(); ++i)
-    {
-        for (std::size_t j{0}; j < pts.size(); ++j)
-        {
-            EXPECT_EQ(less_2f(pts[i], pts[j]), i < j);
-            EXPECT_EQ(less_2d(pts[i], pts[j]), i < j);
-        }
-    }
+    TestLessGrid(points);
+    TestLessGrid(CastDoubleToFloat(points));
 }
 
-TEST(less, simple_3d)
+TEST(Less, Grid3D_4x4x4)
 {
     // 3D extension of the 2D dataset above
-    std::array<Pt3, 64> pts{{
+    std::vector<std::array<double, 64>> points{{
         { -0.75, -0.75, -0.75 },
         { -0.25, -0.75, -0.75 },
         { -0.75, -0.25, -0.75 },
@@ -176,15 +201,6 @@ TEST(less, simple_3d)
         {  0.75,  0.75,  0.75 },
     }};
 
-    zorder_knn::Less<Pt3, 3> less_3f;
-    zorder_knn::Less<Pt3, 3> less_3d;
-
-    for (std::size_t i{0}; i < pts.size(); ++i)
-    {
-        for (std::size_t j{0}; j < pts.size(); ++j)
-        {
-            EXPECT_EQ(less_3f(pts[i], pts[j]), i < j);
-            EXPECT_EQ(less_3d(pts[i], pts[j]), i < j);
-        }
-    }
+    TestLessGrid(points);
+    TestLessGrid(CastDoubleToFloat(points));
 }

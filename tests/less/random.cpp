@@ -27,122 +27,189 @@
 #include <random>
 #include <array>
 
-template <typename T, std::size_t d> using Pt = std::array<T, d>;
-using Pt2 = Pt<double, 2>;
-using Pt3 = Pt<double, 3>;
+namespace
+{
 
-template <typename T, std::size_t d>
+template <typename Point>
 struct BBox
 {
-    Pt<T, d> p_min, p_max;
+    using Scalar = typename Point::value_type;
+    BBox(Scalar bound) { p_min.fill(-bound); p_max.fill(bound); }
+
+    Point p_min, p_max;
 };
 
-using BBox2 = BBox<double, 2>;
-using BBox3 = BBox<double, 3>;
-
-template <typename T, std::size_t d>
-BBox<T, d>
-bb_from_pts_base2(std::vector<Pt<T, d>> const& pts)
+template <typename Point>
+typename BBox<Point>::Scalar
+BoundFromPointsBase2(std::vector<Point> const& points)
 {
-    T abs_pj_max(0);
-    for (auto const& p: pts)
+    using Scalar = typename BBox<Point>::Scalar;
+
+    Scalar abs_pj_max{0};
+    for (auto const& p: points)
     {
-        for (auto v: p)
+        for (auto const& xj: p)
         {
-            abs_pj_max = std::max(abs_pj_max, std::abs(v));
+            abs_pj_max = std::max(abs_pj_max, std::abs(xj));
         }
     }
 
-    T bound = std::pow(2, std::ceil(std::log2(abs_pj_max)));
-
-    BBox<T, d> bb;
-    std::fill(bb.p_min.begin(), bb.p_min.end(), -bound);
-    std::fill(bb.p_max.begin(), bb.p_max.end(), bound);
- 
-    return bb;
+    constexpr auto two = static_cast<Scalar>(2.0);
+    return std::pow(two, std::ceil(std::log2(abs_pj_max)));
 }
 
-template <typename T, std::size_t d>
+template <typename Point>
 void
-zsort(std::vector<Pt<T, d>>& pts)
+SortZOrder(std::vector<Point>& points)
 {
-    BBox<T, d> bb_root = bb_from_pts_base2<T, d>(pts);
-    zsort(pts, 0, pts.size(), d - 1, bb_root);
+    // double the obtained bound to prevent SortZOrder() from failing from
+    // points located on the boundary
+    constexpr std::size_t d = std::tuple_size<Point>::value;
+    using Scalar = typename BBox<Point>::Scalar;
+    constexpr auto two = static_cast<Scalar>(2.0);
+    SortZOrder(points, 0, points.size(), d - 1,
+        BBox<Point>(two * BoundFromPointsBase2<Point>(points)));
 }
 
-template <typename T, std::size_t d>
+template <typename Point>
 void
-zsort(std::vector<Pt<T, d>>& pts,
+SortZOrder(std::vector<Point>& points,
     std::size_t begin, std::size_t end,
-    unsigned int k,
-    BBox<T, d> const& bb_root)
+    std::size_t k,
+    BBox<Point> const& bbox)
 {
+    assert(end >= begin);
+    assert(bbox.p_min[0] <= bbox.p_max[0]);
+    assert(bbox.p_min[1] <= bbox.p_max[1]);
+
+    using Scalar = typename BBox<Point>::Scalar;
+
     // stop unless we are given more than a single point
     if (end - begin <= 1) return;
 
     // split bounding box in half along k-axis
-    BBox<T, d> bb_lower{bb_root}, bb_upper{bb_root};
+    BBox<Point> bbox_lower{bbox}, bbox_upper{bbox};
 
-    T split_k = 0.5 * (bb_root.p_min[k] + bb_root.p_max[k]);
-    bb_lower.p_max[k] = split_k;
-    bb_upper.p_min[k] = split_k;
+    constexpr auto one_half = static_cast<Scalar>(0.5);
+    auto split_k = one_half * (bbox.p_min[k] + bbox.p_max[k]);
+    bbox_lower.p_max[k] = split_k;
+    bbox_upper.p_min[k] = split_k;
 
-    // sort points into halfspaces and recurse
+    // sort points into halfspaces
     std::size_t b(begin), e(end);
 
-    while (b < e)
+    for (std::size_t i{b}; i < e; ++i)
     {
-        while (b < e && pts[e - 1][k] >= bb_upper.p_min[k]
-                     && pts[e - 1][k] <= bb_upper.p_max[k])
-            --e;
-
-        while (b < e && pts[b][k] >= bb_lower.p_min[k]
-                     && pts[b][k] <= bb_lower.p_max[k])
+        if (points[i][k] >= bbox_lower.p_min[k] &&
+            points[i][k] <  bbox_lower.p_max[k])
+        {
+            std::swap(points[b], points[i]);
             ++b;
-
-        if (b < e) std::swap(pts[b], pts[e - 1]);
+        }
     }
 
-    const unsigned int k1 = (k + d - 1) % d;
-    zsort(pts, begin, b, k1, bb_lower);
-    zsort(pts, b, end, k1, bb_upper);
+    for (std::size_t i{e}; i-- > b;)
+    {
+        if (points[i][k] >  bbox_upper.p_min[k] &&
+            points[i][k] <= bbox_upper.p_max[k])
+        {
+            std::swap(points[e - 1], points[i]);
+            --e;
+        }
+    }
+
+    assert(b <= e);
+
+    // if b < e holds there are points on the split plane which are
+    // not yet part of any half-space
+    constexpr auto zero = static_cast<Scalar>(0.0);
+    if (split_k > zero)
+    {
+        e = b;
+    }
+    else
+    {
+        b = e;
+    }
+
+    // recurse along k1-axis
+    constexpr std::size_t d = std::tuple_size<Point>::value;
+    auto k1 = (k + d - 1) % d;
+
+    SortZOrder(points, begin, b, k1, bbox_lower);
+    SortZOrder(points, e, end, k1, bbox_upper);
 }
 
-template <typename T, std::size_t d>
-void random_nd()
+template <typename Point>
+void
+GenerateRandomPoints(std::vector<Point>& points)
 {
     std::random_device rd;
     std::mt19937 e2(rd());
+    using Scalar = typename Point::value_type;
 
-    double bound = std::pow(2.0, 32);
-    std::uniform_real_distribution<> dist(-bound, bound);
+    auto bound = static_cast<Scalar>(std::pow(2.0, 3));
+    std::uniform_real_distribution<Scalar> dist(-bound, bound);
 
-    using Point = Pt<double, d>;
-    std::vector<Point> pts(10000);
-    std::generate(pts.begin(), pts.end(),
-        [&] { Point p; std::generate(p.begin(), p.end(), [&] { return dist(e2); }); return p; }
-    );
+    std::generate(points.begin(), points.end(), [&] {
+        Point p;
+        std::generate(p.begin(), p.end(), [&] { return dist(e2); });
+        return p;
+    });
+}
 
-    std::vector<Point> pts2(pts);
+template <typename Point>
+void
+TestLessRandom(std::vector<Point> const& points)
+{
+    std::vector<Point> points1(points), points2(points);
 
-    zorder_knn::Less<Point, d> less_nd;
-    std::sort(pts.begin(), pts.end(), less_nd);
+    constexpr std::size_t d = std::tuple_size<Point>::value;
+    std::sort(points1.begin(), points1.end(), zorder_knn::Less<Point, d>());
 
-    zsort(pts2);
+    SortZOrder(points2);
 
-    for (auto const& p : pts)
+    for (std::size_t i{0}; i < points1.size(); ++i)
     {
-        for (std::size_t i(0); i < d; ++i)
+        for (std::size_t j{0}; j < points1[i].size(); ++j)
         {
-            EXPECT_EQ(p[i], p[i]);
+            EXPECT_EQ(points1[i][j], points2[i][j]);
         }
     }
 }
 
-TEST(less, flt64_random_2d_10k) { random_nd<double, 2>(); }
-TEST(less, flt64_random_3d_10k) { random_nd<double, 3>(); }
-TEST(less, flt64_random_4d_10k) { random_nd<double, 4>(); }
+template <std::size_t d>
+std::vector<std::array<float, d>>
+CastDoubleToFloat(std::vector<std::array<double, d>> const& points_double)
+{
+    std::vector<std::array<float, d>> points_float(points_double.size());
+    for (std::size_t i{0}; i < points_double.size(); ++i)
+    {
+        for (std::size_t j{0}; j < points_double[i].size(); ++j)
+        {
+            points_float[i][j] = static_cast<float>(points_double[i][j]);
+        }
+    }
 
-TEST(less, flt32_random_2d_10k) { random_nd<double, 2>(); }
-TEST(less, flt32_random_3d_10k) { random_nd<double, 3>(); }
-TEST(less, flt32_random_4d_10k) { random_nd<double, 4>(); }
+    return points_float;
+}
+
+template <std::size_t n, std::size_t d>
+void
+TestLessRandom()
+{
+    std::vector<std::array<double, d>> points(n);
+    GenerateRandomPoints(points);
+
+    TestLessRandom(points);
+    TestLessRandom(CastDoubleToFloat(points));
+}
+
+}
+
+TEST(Less, Random2D_10k)  { TestLessRandom<10000, 2>(); }
+TEST(Less, Random3D_10k)  { TestLessRandom<10000, 3>(); }
+TEST(Less, Random4D_10k)  { TestLessRandom<10000, 4>(); }
+TEST(Less, Random5D_10k)  { TestLessRandom<10000, 5>(); }
+TEST(Less, Random6D_10k)  { TestLessRandom<10000, 6>(); }
+TEST(Less, Random42D_10k) { TestLessRandom<10000, 42>(); }
