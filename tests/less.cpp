@@ -89,8 +89,8 @@ TEST(less, simple_2d)
         {  0.75,  0.75 },  // p15
     }};
     
-    zorder_knn::less<Pt2, 2> less_2f;
-    zorder_knn::less<Pt2, 2> less_2d;
+    zorder_knn::Less<Pt2, 2> less_2f;
+    zorder_knn::Less<Pt2, 2> less_2d;
 
     for (std::size_t i{0}; i < pts.size(); ++i)
     {
@@ -187,8 +187,8 @@ TEST(less, simple_3d)
         {  0.75,  0.75,  0.75 },
     }};
 
-    zorder_knn::less<Pt3, 3> less_3f;
-    zorder_knn::less<Pt3, 3> less_3d;
+    zorder_knn::Less<Pt3, 3> less_3f;
+    zorder_knn::Less<Pt3, 3> less_3d;
 
     for (std::size_t i{0}; i < pts.size(); ++i)
     {
@@ -285,7 +285,7 @@ void random_nd()
 
     std::vector<Point> pts2(pts);
 
-    zorder_knn::less<Point, d> less_nd;
+    zorder_knn::Less<Point, d> less_nd;
     std::sort(pts.begin(), pts.end(), less_nd);
 
     zsort(pts2);

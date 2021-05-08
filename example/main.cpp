@@ -121,7 +121,7 @@ main(int argc, char* argv[])
     });
 
     svg_save("example_random.svg", pts);
-    std::sort(pts.begin(), pts.end(), zorder_knn::less<Pt2, 2>());
+    std::sort(pts.begin(), pts.end(), zorder_knn::Less<Pt2, 2>());
     svg_save("example_morton.svg", pts);
 
     return EXIT_SUCCESS;

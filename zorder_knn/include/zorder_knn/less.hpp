@@ -203,7 +203,7 @@ FloatXorMsb(Scalar p, Scalar q) -> decltype(FloatExp(FloatToUInt(p)))
 // coordinates who have the first differing bit with the highest
 // exponent.
 template <typename Point, std::size_t d>
-struct less
+struct Less
 {
     bool operator()(Point const& p, Point const& q) const
     {
