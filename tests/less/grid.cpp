@@ -90,7 +90,7 @@ TEST(Less, Grid2D_4x4)
     // |_____________________________________________________| y:
     // x: -0.75      -0.25       0.0       0.25       0.75
 
-    std::vector<std::array<double, 16>> points{{
+    std::vector<std::array<double, 2>> points{{
         { -0.75, -0.75 },  // p0
         { -0.25, -0.75 },  // p1
         { -0.75, -0.25 },  // p2
@@ -119,7 +119,7 @@ TEST(Less, Grid2D_4x4)
 TEST(Less, Grid3D_4x4x4)
 {
     // 3D extension of the 2D dataset above
-    std::vector<std::array<double, 64>> points{{
+    std::vector<std::array<double, 3>> points{{
         { -0.75, -0.75, -0.75 },
         { -0.25, -0.75, -0.75 },
         { -0.75, -0.25, -0.75 },
