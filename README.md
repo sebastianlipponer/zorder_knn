@@ -1,9 +1,7 @@
 # zorder_knn
-[![Build badge](https://github.com/sebastianlipponer/zorder_knn/actions/workflows/build.yml/badge.svg)](https://github.com/sebastianlipponer/zorder_knn/actions?workflow=build)
+[![Build badge](https://github.com/sebastianlipponer/zorder_knn/actions/workflows/build.yml/badge.svg)](https://github.com/sebastianlipponer/zorder_knn/actions?workflow=build) [![license](https://img.shields.io/github/license/sebastianlipponer/zorder_knn)](https://github.com/sebastianlipponer/zorder_knn/blob/master/COPYING.MIT)
 
 zorder_knn is a C++ header-only library that implements a floating point morton order comparison operator<sup>1</sup> for n-dimensional points.
-
-**Author**: [Sebastian Lipponer](http://sebastianlipponer.de), **License**: MIT
 
 ## Build
 
@@ -18,7 +16,7 @@ constexpr std::size_t n = 2;
 using Point = std:array<float, n>;
 std::vector<Point> pts;
 // ...
-std::sort(pts.begin(), pts.end(), zorder_knn::less<Point, n>());
+std::sort(pts.begin(), pts.end(), zorder_knn::Less<Point, n>());
 ```
 
 ## Example
