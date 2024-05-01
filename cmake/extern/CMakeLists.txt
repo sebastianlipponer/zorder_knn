@@ -69,14 +69,15 @@ endfunction()
 
 # Download.
 DownloadProject(googletest
-    URL     "https://github.com/google/googletest/archive/release-1.10.0.zip"
-    URL_MD5 "82358affdd7ab94854c8ee73a180fc53"
+    URL     "https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip"
+    URL_MD5 "b4911e882c51cba34bebfb5df500a650"
 )
 
 foreach(_build_type IN ITEMS Debug Release)
     BuildProject(googletest
         BUILD_TYPE ${_build_type}
         CMAKE_CACHE_ARGS "-Dgtest_force_shared_crt:BOOL=ON"
+            "-DCMAKE_DEBUG_POSTFIX:STRING=d"
     )
 endforeach()
 
